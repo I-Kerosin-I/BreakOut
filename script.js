@@ -22,16 +22,16 @@ debugCtx.fillStyle = '#ff0000'
 // const brickRowCount = 30;
 // const brickColumnCount = 80;
 
-const brickRowCount = 90;
-const brickColumnCount = 240;
+const brickRowCount = 45;
+const brickColumnCount = 120;
 
-const brickWidth = 5;
-const brickHeight = 5;
+const brickWidth = 10;
+const brickHeight = 10;
 const brickPadding = (canv.width - brickWidth * brickColumnCount) / (brickColumnCount - 1);
 const ballRadius = 3;
 const ballSpeed = 3;
 const paddleHeight = 10;
-const paddleWidth = 75;
+const paddleWidth = 115;
 const paddleY = canv.height - paddleHeight * 2
 //#endregion
 
@@ -61,12 +61,14 @@ class Ball {
         const verticalExpression = (bx, by) => by < fy(bx, this) && by + brickHeight > fy(bx, this)
         const horizontalExpression = (bx, by) => bx < fx(by, this) && bx + brickWidth > fx(by, this)
 
-        for (const i in bricks) {
+        for (let i = 0; i < bricks.length; i++) {
             let b = bricks[i]
             if (verticalExpression(b.x + (this.velX > 0 ? -ballRadius : brickWidth + ballRadius), b.y)) {
-                this.verticalCollisions.push({ x: b.x + (this.velX > 0 ? -ballRadius : brickWidth + ballRadius), id: i })
+                this.verticalCollisions.push({ x: b.x + (this.velX > 0 ? -ballRadius : brickWidth + ballRadius), id: b.id })
+                b.expectedCollisions.push(this.verticalCollisions)
             } else if (horizontalExpression(b.x, b.y + (this.velY > 0 ? -ballRadius : brickHeight + ballRadius))) {
-                this.horizontalCollisions.push({ y: b.y + (this.velY > 0 ? -ballRadius : brickHeight + ballRadius), id: i })
+                this.horizontalCollisions.push({ y: b.y + (this.velY > 0 ? -ballRadius : brickHeight + ballRadius), id: b.id })
+                b.expectedCollisions.push(this.horizontalCollisions)
             } else {
                 for (const [bx, by] of [[b.x, b.y], [b.x, b.y + brickHeight], [b.x + brickWidth, b.y], [b.x + brickWidth, b.y + brickHeight]]) {
                     let r = px(bx, by)
@@ -76,30 +78,51 @@ class Ball {
                             x: r - Math.sqrt(ballRadius ** 2 - dist ** 2) * this.velX / Math.sqrt(this.velX ** 2 + this.velY ** 2),
                             y: fy(r, this) - Math.sqrt(ballRadius ** 2 - dist ** 2) * this.velY / Math.sqrt(this.velX ** 2 + this.velY ** 2),
                             bx: bx, by: by,
-                            id: i
+                            id: b.id
                         })
+                        b.expectedCollisions.push(this.cornerCollisions)
                     }
                 }
             }
         }
         console.timeEnd('calculateCollision')
-        // if (!verticalCollisions.length) { verticalCollisions.push() }
-        if (this.velX > 0 !== this.velY > 0) {
-            debugDrawLine(fx(0, this), 0, 0, fy(0, this))
-        } else {
-            debugDrawLine(fx(canv.height, this), canv.height, 0, fy(0, this))
-        }
-        debugCtx.fillStyle = '#ff00ff'
-        for (const i of this.horizontalCollisions) {
-            debugDrawPoint(fx(i.y, this), i.y)
-        }
-        debugCtx.fillStyle = '#ff0000'
-        for (const i of this.verticalCollisions) {
-            debugDrawPoint(i.x, fy(i.x, this))
-        }
-        debugCtx.fillStyle = '#fff'
-        for (const i of this.cornerCollisions) {
-            debugDrawPoint(i.x, i.y)
+        // if (this.velX > 0 !== this.velY > 0) {
+        //     debugDrawLine(fx(0, this), 0, 0, fy(0, this))
+        // } else {
+        //     debugDrawLine(fx(canv.height, this), canv.height, 0, fy(0, this))
+        // }
+        // debugCtx.fillStyle = '#ff00ff'
+        // for (const i of this.horizontalCollisions) {
+        //     debugDrawPoint(fx(i.y, this), i.y)
+        // }
+        // debugCtx.fillStyle = '#ff0000'
+        // for (const i of this.verticalCollisions) {
+        //     debugDrawPoint(i.x, fy(i.x, this))
+        // }
+        // debugCtx.fillStyle = '#fff'
+        // for (const i of this.cornerCollisions) {
+        //     debugDrawPoint(i.x, i.y)
+        // }
+    }
+}
+
+class Brick {
+    constructor(x, y, id, color, breakable) {
+        this.x = x
+        this.y = y
+        this.id = id
+        this.color = color
+        this.expectedCollisions = []
+        this.breakable = breakable
+    }
+    destroy(id) {
+        if (this.breakable) {
+            brickCtx.clearRect(this.x - brickPadding, this.y - brickPadding, brickWidth + brickPadding, brickHeight + brickPadding)
+            for (let i = 0; i < this.expectedCollisions.length; i++) {
+                const ball = this.expectedCollisions[i];
+                ball.splice(ball.findIndex((obj) => obj.id === this.id), 1)
+            }
+            bricks.splice(id, 1)
         }
     }
 }
@@ -108,16 +131,36 @@ class Ball {
 // let paddleX = (canv.width - paddleWidth) / 2;
 let paddleX = 595;
 let oldPaddleX
-let balls = [new Ball(x = 632.8152332716845, y = 640.4493503778419, velX = 10.33003421940868, velY = 421.8354987405247)]
-let bricks = [];
-let calculatedBricks = []
-let horizontalCollisions = []
-let verticalCollisions = []
+let balls = [new Ball(x = canv.width / 2, y = paddleY - ballRadius * 2, velX = 0, velY = 0)]
+let bricks = []
+
 //#endregion
+
+function hsvToRgb(h, s, v) {
+    var r, g, b;
+
+    var i = Math.floor(h * 6);
+    var f = h * 6 - i;
+    var p = v * (1 - s);
+    var q = v * (1 - f * s);
+    var t = v * (1 - (1 - f) * s);
+
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+
+    return '#' + Math.round((r * 255)).toString(16).padStart(2, '0') + Math.round((g * 255)).toString(16).padStart(2, '0') + Math.round((b * 255)).toString(16).padStart(2, '0');
+}
+
 
 for (let c = 0; c < brickColumnCount; c++) {
     for (let r = 0; r < brickRowCount; r++) {
-        bricks.unshift({ x: c * (brickWidth + brickPadding), y: r * (brickHeight + brickPadding) });
+        bricks.push(new Brick(x = (c * (brickWidth + brickPadding)), y = r * (brickHeight + brickPadding), id = c * brickColumnCount + r, hsvToRgb(c / 120, 1, 1), true));
     }
 }
 
@@ -130,9 +173,25 @@ for (let c = 0; c < brickColumnCount; c++) {
 document.addEventListener('mousemove', (e) => {
     paddleX = e.x - paddleWidth / 2
 })
+function moveBall(e) {
+    clearBalls()
+    balls[0].x = Math.min(Math.max(e.x, ballRadius), canv.width - ballRadius)
+}
+function throwBall(e) {
+    balls[0].velY = -500
+    balls[0].velX = 0.001
+    balls[0].calculateCollision()
+    document.removeEventListener('mousemove', moveBall)
+    document.removeEventListener('mousedown', throwBall)
+    document.addEventListener('mousedown', (e) => {balls.push(new Ball(e.x, e.y, 0.1, -500)); balls[balls.length-1].calculateCollision()})
+}
+document.addEventListener('mousemove', moveBall)
+document.addEventListener('mousedown', throwBall)
+
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'd') {
+        startTime = new Date().getTime() - 5
         draw()
     }
     if (e.key === 's') {
@@ -192,29 +251,11 @@ function clearPaddle() {
 }
 //#endregion
 
-//#region bricks draw
-const brickImg = document.createElement('canvas');
-brickImg.width = brickWidth * 2 + 1;
-brickImg.height = brickHeight;
-const brickImgCtx = brickImg.getContext('2d');
-
-brickImgCtx.fillStyle = "#0060dd";
-brickImgCtx.fillRect(0, 0, brickWidth, brickHeight);
-brickImgCtx.fillStyle = "#00000000";
-brickImgCtx.fillRect(brickWidth, 0, brickWidth + 1, brickHeight);
-
-function drawBrick(x, y) {
-    brickCtx.drawImage(brickImg, 0, 0, brickWidth, brickHeight, x, y, brickWidth, brickHeight)
-}
-function clearBrick({ x, y }) {
-    brickCtx.clearRect(x, y, brickWidth, brickHeight)
-}
-
-//#endregion
 
 function drawBricks() {
     for (const brick of bricks) {
-        drawBrick(brick.x, brick.y)
+        brickCtx.fillStyle = brick.color
+        brickCtx.fillRect(brick.x, brick.y, brickWidth, brickHeight)
     }
 }
 
@@ -243,8 +284,8 @@ function collisionDetection(dTime) {
                 ball.x = fx(i.y, ball)
                 ball.y = i.y
                 ball.velY = -ball.velY
-                clearBrick(bricks[i.id])
-                bricks.splice(i.id, 1)
+                const index = bricks.findIndex((obj) => obj.id === i.id)
+                bricks[index].destroy(index)
                 ball.calculateCollision()
                 continue ballLoop
             }
@@ -254,8 +295,8 @@ function collisionDetection(dTime) {
                 ball.x = i.x
                 ball.y = fy(i.x, ball)
                 ball.velX = -ball.velX
-                clearBrick(bricks[i.id])
-                bricks.splice(i.id, 1)
+                const index = bricks.findIndex((obj) => obj.id === i.id)
+                bricks[index].destroy(index)
                 ball.calculateCollision()
                 continue ballLoop
             }
@@ -270,21 +311,21 @@ function collisionDetection(dTime) {
                 let vel = Math.sqrt(ball.velX ** 2 + ball.velY ** 2)
                 ball.velX = vel * Math.cos(newAng)
                 ball.velY = vel * -Math.sin(newAng)
-                clearBrick(bricks[i.id])
-                bricks.splice(i.id, 1)
+                const index = bricks.findIndex((obj) => obj.id === i.id)
+                bricks[index].destroy(index)
                 ball.calculateCollision()
                 continue ballLoop
             }
         }
 
-        if (ball.x + dx > canv.width - ballRadius || ball.x + dx < ballRadius) {
+        if (ball.x + dx > canv.width - ballRadius || ball.x + dx < ballRadius) {  // врезался в стену
             ball.y = fy(ball.velX > 0 ? canv.width - ballRadius : ballRadius, ball)
             ball.x = ball.velX > 0 ? canv.width - ballRadius : ballRadius
             ball.velX = -ball.velX;
             ball.calculateCollision()
             continue ballLoop
         }
-        if (ball.y + dy < ballRadius) {
+        if (ball.y + dy < ballRadius) {     // врезался в потолок
             ball.x = fx(ballRadius, ball)
             ball.y = ballRadius
             ball.velY = -ball.velY;
@@ -292,7 +333,7 @@ function collisionDetection(dTime) {
             continue ballLoop
         }
         else if (ball.y + dy <= paddleY + paddleHeight && ball.y >= paddleY + paddleHeight) {
-            if (fx(paddleY + paddleHeight, ball) > paddleX && fx(paddleY + paddleHeight, ball) < paddleX + paddleWidth) {
+            if (fx(paddleY + paddleHeight, ball) > paddleX && fx(paddleY + paddleHeight, ball) < paddleX + paddleWidth) {  // врезался в низ платформы
                 ball.x = fx(paddleY + paddleHeight, ball)
                 ball.y = paddleY + paddleHeight
                 ball.velY = -ball.velY
@@ -300,7 +341,7 @@ function collisionDetection(dTime) {
             }
         }
         else if (ball.y + dy >= paddleY && ball.y <= paddleY) {
-            if (fx(paddleY, ball) > paddleX && fx(paddleY, ball) < paddleX + paddleWidth) {
+            if (fx(paddleY, ball) > paddleX && fx(paddleY, ball) < paddleX + paddleWidth) {  // врезался в верх платформы
                 ball.x = fx(paddleY, ball)
                 ball.y = paddleY
                 const ang = (1 - (ball.x - paddleX) / paddleWidth) * 3.14
@@ -313,9 +354,9 @@ function collisionDetection(dTime) {
                 continue ballLoop
             }
         }
-        if (ball.y > canv.height + ballRadius) {
+        if (ball.y > canv.height + ballRadius) {   // улетел вниз
             balls.splice(i, 1)
-            if (balls = []) {
+            if (!balls.length) {
                 location.reload()
                 console.log('game over')
             }
@@ -352,7 +393,6 @@ function draw() {
 
     // console.timeEnd('FULL_FRAME')
 }
-balls[0].calculateCollision()
 drawBricks();
 let startTime = new Date().getTime()
 draw()
