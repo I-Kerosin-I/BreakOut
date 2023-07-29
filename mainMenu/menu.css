@@ -1,0 +1,52 @@
+@font-face {
+    font-family: 'BetterVCR';
+    src: url("../better-vcr.ttf");
+}
+
+body {
+    background-color: #212121;
+}
+
+.main-menu {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20vh;
+}
+
+.main-menu button {
+    width: 20%;
+    margin: 10px;
+    /* padding: 10px 20px; */
+    border-radius: 8px;
+    font-size: 20px;
+    font-family: BetterVCR;
+    text-shadow:  -1px -1px 1px black, 1px -1px 1px black, -1px 1px 1px black, 1px 1px 1px black;
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    transition: transform 0.1s;
+    transition-timing-function: cubic-bezier(0.35, 1.41, 1, 1.46);
+    color: #fff;
+    border: none;
+}
+
+.main-menu button:hover {
+    transform: scale(1.25);
+}
+
+.main-menu button:active {
+    /* transform: ; */
+}
+
+.primary-btn {
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: #8BDB5C;
+}
+.secondary-btn{
+    background-color: #868686;
+    padding: 0.8rem;
+
+}

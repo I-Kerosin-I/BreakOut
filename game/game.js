@@ -160,7 +160,7 @@ function hsvToRgb(h, s, v) {
 
 for (let c = 0; c < brickColumnCount; c++) {
     for (let r = 0; r < brickRowCount; r++) {
-        bricks.push(new Brick(x = (c * (brickWidth + brickPadding)), y = r * (brickHeight + brickPadding), id = c * brickColumnCount + r, hsvToRgb(c / 120, 1, 1), true));
+        bricks.push(new Brick(x = (c * (brickWidth + brickPadding)), y = r * (brickHeight + brickPadding), id = c * brickColumnCount + r, hsvToRgb(c / 60, 1, 1), true));
     }
 }
 
@@ -368,7 +368,7 @@ function collisionDetection(dTime) {
 }
 
 function draw() {
-    requestAnimationFrame(draw)
+    // requestAnimationFrame(draw)
     let curTime = new Date().getTime()
     let dTime = (curTime - startTime) / 1000
     startTime = curTime
