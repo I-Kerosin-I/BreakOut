@@ -19,8 +19,6 @@ debugCtx.fillStyle = '#ff0000'
 //#endregion
 
 //#region constants
-// const brickRowCount = 30;
-// const brickColumnCount = 80;
 
 const brickRowCount = 45;
 const brickColumnCount = 120;
@@ -126,10 +124,8 @@ class Brick {
         }
     }
 }
-// 632.8152332716845 640.4493503778419 45.33003421940868 421.8354987405247 575.5
 //#region varaibles
-// let paddleX = (canv.width - paddleWidth) / 2;
-let paddleX = 595;
+let paddleX = (canv.width - paddleWidth) / 2;
 let oldPaddleX
 let balls = [new Ball(x = canv.width / 2, y = paddleY - ballRadius * 2, velX = 0, velY = 0)]
 let bricks = []
@@ -183,7 +179,7 @@ function throwBall(e) {
     balls[0].calculateCollision()
     document.removeEventListener('mousemove', moveBall)
     document.removeEventListener('mousedown', throwBall)
-    document.addEventListener('mousedown', (e) => {balls.push(new Ball(e.x, e.y, 0.1, -500)); balls[balls.length-1].calculateCollision()})
+    document.addEventListener('mousedown', (e) => { balls.push(new Ball(e.x, e.y, 0.1, -500)); balls[balls.length - 1].calculateCollision() })
 }
 document.addEventListener('mousemove', moveBall)
 document.addEventListener('mousedown', throwBall)
@@ -368,30 +364,17 @@ function collisionDetection(dTime) {
 }
 
 function draw() {
-    // requestAnimationFrame(draw)
+    requestAnimationFrame(draw)
     let curTime = new Date().getTime()
     let dTime = (curTime - startTime) / 1000
     startTime = curTime
-    // console.time('FULL_FRAME')
 
     clearBalls()
-
-
-    // console.time('collisionDetection')
     collisionDetection(dTime);
-    // console.timeEnd('collisionDetection')
-
-    // console.time('drawBall')
     drawBalls();
-    // console.timeEnd('drawBall')
-
-    // console.time('drawPaddle')
     clearPaddle()
     drawPaddle();
     oldPaddleX = paddleX
-    // console.timeEnd('drawPaddle')
-
-    // console.timeEnd('FULL_FRAME')
 }
 drawBricks();
 let startTime = new Date().getTime()
