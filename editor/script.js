@@ -68,8 +68,9 @@ function drawEllipse(X1, Y1, a, b, filled) {
         drawLine(X1 - Math.floor(a * 0.8), Y1, X1 + Math.floor(a * 0.8), Y1)
         return
     }
-    previewCtx.fillBrick(X1, Y1 + b)
-    previewCtx.fillBrick(X1, Y1 - b)
+    if (Y1 + b < 45) {previewCtx.fillBrick(X1, Y1 + b)} 
+    if (Y1 - b >= 0) {previewCtx.fillBrick(X1, Y1 - b)}
+    
     while (y > 0) {
         if (b * b * x < a * a * y) {
             if (b ** 2 * (x + 1) ** 2 + a ** 2 * (y - 0.5) ** 2 - a ** 2 * b ** 2 > 0) {
@@ -82,12 +83,16 @@ function drawEllipse(X1, Y1, a, b, filled) {
             }
             y--
         }
-        X1 + x > 0 && Y1 - y > 0 ? previewCtx.fillBrick(X1 + x, Y1 - y) : null
-        X1 - x > 0 && Y1 - y > 0 ? previewCtx.fillBrick(X1 - x, Y1 - y) : null
-        X1 + x > 0 && Y1 + y > 0 ? previewCtx.fillBrick(X1 + x, Y1 + y) : null
-        X1 - x > 0 && Y1 + y > 0 ? previewCtx.fillBrick(X1 - x, Y1 + y) : null
+        if (X1 + x > 0 && Y1 - y > 0) { previewCtx.fillBrick(X1 + x, Y1 - y) }
+        if (X1 - x > 0 && Y1 - y > 0) { previewCtx.fillBrick(X1 - x, Y1 - y) }
+        if (X1 + x > 0 && Y1 + y < 45) { previewCtx.fillBrick(X1 + x, Y1 + y) }
+        if (X1 - x > 0 && Y1 + y < 45) { previewCtx.fillBrick(X1 - x, Y1 + y) }
         if (filled) {
-            for (let i = X1 - x; i < X1 + x; i++) { previewCtx.fillBrick(i, Y1 - y); previewCtx.fillBrick(i, Y1 + y) }
+            let lastX = Math.min(X1 + x, 128)
+            for (let i = Math.max(X1 - x, 0); i < lastX; i++) {
+                if (Y1 - y >= 0) { previewCtx.fillBrick(i, Y1 - y) }
+                if (Y1 + y < 45) { previewCtx.fillBrick(i, Y1 + y) }
+            }
         }
     }
 }
@@ -213,6 +218,3 @@ function saveLevel() {
 function loadLevel() {
 
 }
-
-
-
