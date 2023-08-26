@@ -1,21 +1,14 @@
 //#region canvases
 const canv = document.getElementById("mainCanv")
 const brickCanv = document.getElementById("bricksCanv")
-const debugCanv = document.getElementById("debugCanv")
 const ctx = canv.getContext('2d')
 const brickCtx = brickCanv.getContext('2d')
-const debugCtx = debugCanv.getContext('2d')
 
 canv.width = window.innerWidth;
 canv.height = window.innerHeight;
 brickCanv.width = window.innerWidth;
 brickCanv.height = window.innerHeight;
-debugCanv.width = window.innerWidth;
-debugCanv.height = window.innerHeight;
 
-debugCtx.lineWidth = 1
-debugCtx.strokeStyle = '#00ff00'
-debugCtx.fillStyle = '#ff0000'
 //#endregion
 
 //#region constants
@@ -48,7 +41,6 @@ class Ball {
     }
     calculateCollision() {
         console.time('calculateCollision')
-        debugCtx.clearRect(0, 0, debugCanv.width, debugCanv.height)
         this.verticalCollisions = []
         this.horizontalCollisions = []
         this.cornerCollisions = []
@@ -84,23 +76,6 @@ class Ball {
             }
         }
         console.timeEnd('calculateCollision')
-        // if (this.velX > 0 !== this.velY > 0) {
-        //     debugDrawLine(fx(0, this), 0, 0, fy(0, this))
-        // } else {
-        //     debugDrawLine(fx(canv.height, this), canv.height, 0, fy(0, this))
-        // }
-        // debugCtx.fillStyle = '#ff00ff'
-        // for (const i of this.horizontalCollisions) {
-        //     debugDrawPoint(fx(i.y, this), i.y)
-        // }
-        // debugCtx.fillStyle = '#ff0000'
-        // for (const i of this.verticalCollisions) {
-        //     debugDrawPoint(i.x, fy(i.x, this))
-        // }
-        // debugCtx.fillStyle = '#fff'
-        // for (const i of this.cornerCollisions) {
-        //     debugDrawPoint(i.x, i.y)
-        // }
     }
 }
 
@@ -254,21 +229,6 @@ function drawBricks() {
         brickCtx.fillRect(brick.x, brick.y, brickWidth, brickHeight)
     }
 }
-
-function debugDrawPoint(x, y) {
-    debugCtx.beginPath()
-    debugCtx.moveTo(x, y)
-    debugCtx.arc(x, y, 3, 0, 6.29)
-    debugCtx.fill()
-}
-function debugDrawLine(x1, y1, x2, y2) {
-    debugCtx.beginPath()
-    debugCtx.moveTo(x1, y1)
-    debugCtx.lineTo(x2, y2)
-    debugCtx.stroke()
-    debugCtx.closePath()
-}
-
 
 function collisionDetection(dTime) {
     ballLoop: for (let i = 0; i < balls.length; i++) {
